@@ -1,0 +1,394 @@
+---
+title: "Analysis of World Alcohol Consumption"
+author:
+- familyname: Kumar
+  othernames: Aishwarya Anil
+  address: Monash University
+  qualifications: aani0005@monash.student.com
+  email: aani0005@monash.student.com
+- familyname: Jena
+  othernames: Amrita
+  address: Monash University,Clayton Campus 
+  qualifications: ajen0022@student.monash.edu
+- familyname: Saini
+  othernames: Priyasha
+  address: Monash University
+  qualifications: psai0005@student.monash.edu
+  email: psai0005@student.monash.edu
+- familyname: Nguyen
+  othernames: Xuan Nhat Minh
+  address: Monash University
+  qualifications: xngu0008@student.monash.edu
+  email: xngu0008@student.monash.edu
+bibliography: references.bib
+biblio-style: authoryear-comp
+linestretch: 1.5
+organization: Monash University
+output:
+  monash::report:
+    fig_caption: yes
+    fig_height: 5
+    fig_width: 8
+    includes:
+      in_header: preamble.tex
+    keep_tex: yes
+    number_sections: yes
+    citation_package: biblatex
+    toc: true
+---
+\pagebreak
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE,
+                      error = FALSE,
+                      out.width = "70%",
+                      fig.align = "center")
+library(tinytex)
+library(kableExtra)
+library(broom)
+library(tidyverse)
+library(here)
+library(ggrepel)
+library(ggplot2)
+library(knitr)
+library(rmarkdown)
+library(bookdown)
+```
+
+# Executive summary
+
+The @owidalcoholconsumption website contains a thorough examination of alcohol consumption trends. The statistics revealed that, with a few notable exceptions, alcohol consumption has vastly increased worldwide over time. Additionally, alcohol consumption varied greatly by nation, with some having significantly higher levels than others.
+
+The primary objective of this report is to provide organizations with insights into this issue and encourage the establishment of strategies and policies in order to mitigate such harmful influences of excessive alcohol consumption and avert potential hazards.
+
+The report endeavors to analyze the the prevalence of alcohol use and the most popular beverage. Moreover, it also consider the global patterns of alcohol expenditure by investigating the data of alcohol consumption versus GDP per capita and population in 2018 as well as alcohol expenditure by places in the USA. Furthermore, the mental health issues due to alcohol, also known as Alcohol Use Disorder (AUD), is mentioned by analyzing leading countries in this issue and its distribution worldwide compared to population by means of standard measures. Lastly, the global trend in road-traffic deaths due to alcohol will be analyzed to support the adverse influence of alcohol consumption.
+
+On analyzing the data, we also come to an understanding that alcohol consumption varied greatly by nation, beer is the most popular beverage, followed by wine and spirits, the ratio of individuals suffering from AUD is much higher in some countries as compared to most other countries indicating the population in some places being more prone to alcoholism, and there is significant variation in standard alcohol drinking measures across the different countries, which can be obtained from the latest data available.
+
+Policymakers and public health professionals can utilize these findings to help them create measures to combat the negative impacts of excessive alcohol use in their particular nations.
+
+\pagebreak
+
+# Introduction
+
+Social drinking, around the world, has always been part of the society and enjoyed by many. Binge drinking among youth is becoming more and more popular especially as a leisure activity.
+Despite its high consumption rate, alcohol exerts detrimental effects on society, such as compromising human health, causing accidents, and leading to social problems. According to @nationalnational, Alcohol Use Disorder(AUD) is one such risk factor which mainly refers to mental health problems caused due to heavy alcohol consumption. This can cause a negative concussion on social and economic conditions. Furthermore, it burdens people with financial constraints like hampering their income. As a result, this controversial issue has attracted concerns from many researchers and policymakers who desire to improve the current situation and stabilize society.
+
+The figure \ref{fig:worldmap} shows the total alcohol that has been consumed per person for the year 2018. The above image has been taken from the @owidalcoholconsumption website.
+```{r worldmap, fig.align='center',fig.cap="Alcohol consumption per person for the world for 2018", out.width = "400px", out.height= "250px"}
+knitr::include_graphics(here::here("images/worldmap.png"))
+
+```
+
+With the supporting data from [Our world in data](https://ourworldindata.org/), this report will summarize 
+- overall alcohol intake, types of beverages consumed across the globe and has the beverage preference changed over the years, if yes, which countries has the most number of consumers based on the beverage types.
+- the disparities in alcohol expenditure will also be examined by analyzing its relationship with GDP per capita and population. This was conducted to provide insights into our doubts about whether wealthier or more populated countries consume more alcohol than the others.
+- the conditions such as alcohol abuse or alcohol addiction(AUD) can be different in different people ranging from mild, moderate, or severe. Hence, recognizing pattern and proper diagnosis can be helpful.
+- impact of alcohol consumption on road safety, as it is one of the major causes of road accident deaths worldwide. It has also been found that there exists a correlation between the amount of alcohol consumed and people involved in road traffic accidents.
+
+# Methodology
+
+This report's technical analysis uses the following R packages: \newline
+- tidyverse by @tidyverse \newline
+- ggplot2 by @ggplot2 \newline
+- bookdown by @Xie2020-es \newline
+- tinytex by @tinytex \newline
+- kableExtra by @kableExtra \newline
+- broom by @broom \newline
+- here by @here \newline
+- ggrepel by @ggrepel \newline
+- knitr by @knitr \newline
+- rmarkdown by @rmarkdown \newline
+
+##  Alcohol Beverage preferences across the globe 
+
+Although the word "alcohol" has been used extensively, it actually refers to a variety of drinks. Beer, Spirits, and Wine are the solution portion to it which can be seen in figure \ref{fig:beveragestype}. Comparing the data for the earliest and most recent year available will provide you the classification of alcohol and any significant shifts in patterns of its usage that are relevant to the circumstances at hand.
+The data has been taken from @owidalcoholconsumption
+
+```{r datasets, include = FALSE}
+# loading the datasets that will be used through the analysis
+alcohol_by_type <-read_csv(here::here("data/alcohol-by-type.csv"))
+```
+
+```{r beveragestype, fig.cap= "Beverage Consumption 1964 vs 2014", out.width = "400px", out.height= "250px", fig.align='center'}
+# tidying the data set as per the requirement
+combined_data <- alcohol_by_type %>% 
+                   filter(Year == c("1929", "2014")) %>%
+                   rename(Spirits = "Spirits (% total alcohol)",Wine = "Wine (% total alcohol)", Beer = "Beer (% total alcohol)") %>% 
+                  gather(key = "Beverages", value = "value", Spirits, Beer, Wine)
+# plotting the graph
+ggplot(combined_data, aes(x = Beverages, y = value, fill = Beverages)) + 
+  geom_bar(stat = "identity") +
+  facet_wrap(~ Year, ncol = 3) +
+  labs(title = "Beverage Consumption 1964 vs 2014",
+       x = "Beverages", y = "Consumption") +
+   theme(plot.title = element_text(hjust = 0.5, size = 18))
+```
+
+Based on the consumption of each beverage, the table \ref{tab:table} displays a relationship between the most preferred beverage type. This is accomplished by computing the maximum values among beer, wine, and spirits and then determining which sort of alcohol is most preferred one.
+
+```{r table, fig.align='center', include = TRUE}
+# from the alcohol_by_type dataset filtering out the required variables and then calculating the maximum of each beverage type
+new_data <- alcohol_by_type %>% 
+            filter(Year == "2014") %>%
+            rename(Spirits = "Spirits (% total alcohol)",Wine = "Wine (% total alcohol)", Beer = "Beer (% total alcohol)", Country = "Entity") %>% 
+            rowwise() %>%
+            mutate(Max_alcohol = max(Spirits, Beer, Wine),
+            Alcohol_Type = case_when(Max_alcohol == Spirits ~ "Spirits",
+                                  Max_alcohol == Beer ~ "Beer",
+                                  Max_alcohol == Wine ~ "Wine")) %>% 
+           select(Country, Max_alcohol, Alcohol_Type)
+# constructing a table based on the above findings and giving it a caption
+kable(new_data, caption = "Preferred Beverage in Different Countries", align = "c")
+```
+\pagebreak
+
+## Alcohol's impact on finances: Exploring the relationship between income and expenditure
+
+In order to fulfill our aim, a precise analysis of worldwide alcohol expenditure is performed based on reliable information obtained from the [Alcohol Consumption](https://ourworldindata.org/alcohol-consumption) article on the [Our world in data](https://ourworldindata.org/) website.
+```{r}
+cons_vs_gdp_pop <- read_csv(here::here("data/alcohol-consumption-vs-gdp-per-capita.csv")) %>%
+  rename(Country = Entity,
+         Population = `Population (historical estimates)`) %>%
+  filter(Country != "World") %>%
+  drop_na()
+alcohol_exp <- read_csv(here::here("data/constant_dollar_alcohol_expenditures_no_taxes_tips.csv"))
+alcohol_exp <- alcohol_exp %>%
+  pivot_longer(!Year, names_to = "Places", values_to = "Alcohol Expenditure in 2021 $USD")
+```
+To analyze the expenditure on alcohol, two data sets are used to provide more insights. The first data set contains the world's alcohol consumption, GDP per capita, and population in 2018 by countries and continents which is the most recently available data.
+Figure \ref{fig:GDP-vs-Consumption} and figure \ref{fig:Population-vs-Consumption} show the relationship between alcohol consumption with income and population. Both figures provide some insights into whether linear relationships exist between alcohol consumption (liters per capita) and either GDP per capita or population in 2018. The second data set contains the alcohol expenditure by places in the USA from 1997 to 2021.
+```{r GDP-vs-Consumption, fig.cap = "Scatterplot between the Alcohol Consumption versus GDP per capita in 2018 among continents."}
+cons_vs_gdp_pop %>%
+  ggplot(aes(x = `GDP per capita`,
+             y = `Total alcohol consumption per capita`,
+             color = Continent)) +
+  geom_point() +
+  labs(title = bquote(
+    bold("Total alcohol consumption per capita versus GDP per capita (2018)")),
+  y = "Total alcohol consumption (litres per capita)") +
+  theme(plot.title = element_text(size = 12, hjust = 0.5),
+        text = element_text(size = 10))
+```
+```{r Population-vs-Consumption, fig.cap = "Scatterplot between the Alcohol Consumption versus Population in 2018 among continents."}
+cons_vs_gdp_pop %>%
+  ggplot(aes(x = `Population`,
+             y = `Total alcohol consumption per capita`,
+             color = Continent)) +
+  geom_point() +
+  labs(title = bquote(
+    bold("Total alcohol consumption per capita versus Population (2018)")),
+    y = "Total alcohol consumption (litres per capita)") +
+  scale_x_continuous(labels = scales::label_number()) +
+  theme(plot.title = element_text(size = 12, hjust = 0.5),
+        text = element_text(size = 10))
+```
+Besides scatterplots, linear regression models can also effectively assist in analyzing these relationships. table \ref{tab:lm-gdp-cons} and table \ref{tab:lm-pop-cons} show the statistical summary of linear regression models of total alcohol consumption per capita versus GDP per capita and population in 2018 respectively. The efficiency of both linear regression models can be measured by the reported $R^2$ and $p-value$ from the summary of models. The $R^2$ explains the percentage of changes in the dependent variable being explained by changes in the independent variable. A high $R^2$ indicates the possibility of the model fitting data well. The $p-value$ supports the evidence of variables being statistically significant for predicting dependent variable. If the $p-value$ is greater than 0.5, there is insufficient evidence that the variable is statistically significant at 95% significance level.
+```{r lm-gdp-cons}
+cons_vs_gdp_cor <-
+  cor(cons_vs_gdp_pop$`Total alcohol consumption per capita`,
+    cons_vs_gdp_pop$`GDP per capita`,
+    method = "pearson")
+fit_model_gdp <-
+  lm(`Total alcohol consumption per capita` ~ `GDP per capita`, data = cons_vs_gdp_pop)
+fit_model_gdp %>% 
+  tidy() %>% 
+  kable(caption = "Statistic summary of linear regression model between Total alcohol consumption per capita and GDP per capita in 2018")
+```
+```{r lm-pop-cons}
+cons_vs_pop_cor <-
+  cor(cons_vs_gdp_pop$`Total alcohol consumption per capita`,
+    cons_vs_gdp_pop$Population,
+    method = "pearson")
+fit_model_pop <-
+  lm(`Total alcohol consumption per capita` ~ Population, data = cons_vs_gdp_pop)
+fit_model_pop %>% 
+  tidy() %>% 
+  kable(caption = "Statistic summary of linear regression model between Total alcohol consumption per capita and Population in 2018")
+```
+
+## Insight into Alcoholism: Understanding Alcohol Use Disorder
+
+For analyzing the data to determine the situation of prevalence of AUD among different gender, across the globe, top ten countries with most number of people suffering from AUD were selected from the entire dataset provided on the [website](https://ourworldindata.org/alcohol-consumption#alcoholism-and-alcohol-use-disorders) by @owidalcoholconsumption.
+
+The main motivation in choosing the most populous countries was to understand if there is a specific gender that suffers more with alcoholism in these regions so that we can figure out the issue in a more concentrated manner to derive conclusions and provide suggestions accordingly.
+
+We consider 2 genders (i.e. male and female) in this study. The data set "_prevalence-of-alcohol-disorders-males-vs-females.csv_" is picked to determine the percentage of males suffering from AUD vs the percentage of female suffering from AUD. We choose the 'standardized age(percent)' of male and female for this study.
+
+We used standardized age as a covariate in our analysis to control for potential confounding effects of age on the outcome variable. Standardized age was calculated as a percentage by dividing the raw age variable by the maximum age in the study population and multiplying by 100. 
+
+The formula used to calculate standardized age as a percentage was as follows:
+\begin{equation}
+standardized\;age\;percentage = (raw\;age / max\;age) \times 100
+\end{equation}
+
+From the below figure \ref{fig:aud1}, it can be pointed out that median of standardized age percentage in female is lower than the median standardized age percentage of male population which informs that overall more male are prone to AUD due to heavy alcohol consumption than female. The outliers being much higher for men points the alarming detail that there is an unusual percentage of men who are suffering from alcohol abuse related disorders in some countries.
+
+```{r aud1,fig.cap="Median AUD across standardized age percentage of males and females around the world in 30 years",fig.height=5,fig.width=10}
+alcohol_prevalance <- read_csv(here("data/prevalence-of-alcohol-disorders-males-vs-females.csv"))
+alcohol_prevalance <- alcohol_prevalance %>% 
+  rename(prevalance_aud_in_male = "Prevalence - Alcohol use disorders - Sex: Male - Age: Age-standardized (Percent)", prevalance_aud_in_female = "Prevalence - Alcohol use disorders - Sex: Female - Age: Age-standardized (Percent)",
+         total_population_estimate = "Population (historical estimates)")
+alcohol_prevalance <- alcohol_prevalance %>% filter(!(is.na(prevalance_aud_in_male)) ,!(is.na(prevalance_aud_in_female)))
+a<- data.frame(alcohol_prevalance$prevalance_aud_in_male)
+a$Div <- "median aud in male"
+a <- a %>% rename("prevalance_of_AUD" = "alcohol_prevalance.prevalance_aud_in_male")
+b<- data.frame(alcohol_prevalance$prevalance_aud_in_female)
+b$Div <- "median aud in female"
+b <- b %>% rename("prevalance_of_AUD" = "alcohol_prevalance.prevalance_aud_in_female")
+alc_data <- bind_rows(a,b)
+ggplot(alc_data, aes(y=prevalance_of_AUD, x=as.factor(Div), fill= as.factor(Div))) + geom_boxplot()+ labs(y = "Count" , x = "median standardized age (percent) in male vs female") + scale_fill_manual(name="Legend",values=c("#e52b50", "#e9d66b"))
+```
+
+From the table \ref{tab:alcoholSummary}, it is clear that the mean of Alcohol Use Disorder in male across several years is 2.175 whereas in female it is relatively lower (ie) 0.8416. This table also indicates that the distribution of data is more even in female population around the world over the span of 30 years.
+
+```{r alcoholSummary,fig.height=5,fig.width=10}
+alc_summary <- alcohol_prevalance %>% rename("prevalence in male" = "prevalance_aud_in_male", "prevalence in female" = "prevalance_aud_in_female")
+alc_summary <- alc_summary %>% filter(Year == 2019)  %>%  select("prevalence in female", "prevalence in male") %>% summary(mean1 = mean("prevalence in female"), mean2 = mean("prevalence in male"))
+head(alc_summary,10) %>%
+kable(caption = "summary of AUD in male vs female in 2019", booktabs = TRUE) %>% 
+  kable_styling(bootstrap_options = c("bordered" , "hover")) %>% 
+      row_spec(0, background = "#fae7b5", color = "black", font_size = 18)
+```
+
+## Alcohol Consumption measure,patterns and trends
+
+- Alcohol consumption can lead to various detrimental effects .The report aims to explore the standard drinking measures that needs to be taken to avoid the risks that contribute to crimes or accidents.
+
+- The data for this analysis was collected from this  [website](https://https://ourworldindata.org/alcohol-consumption#what-is-a-standard-drink-measure),which provides data on standard drinking measures of different countries.The data was downloaded in CSV format and was imported into R for analysis.
+
+- To analyse the data, tidyverse and ggplot libraries are used for data visualization and exploration.The data has been cleaned and reprocessed to remove the missing values. The variable names have been renamed to make them user-friendly.
+
+- Figure \ref{fig:std-alc} below suggests the standard drinking limits for various countries. It can be clearly understood that the range for standard drinking varies from 0-20 grams per unit. There are countries that have much higher or lower limits.
+
+```{r std-alc, fig.cap = "Standard drinking measure by country in grams per unit"}
+standard_alcohol <- read_csv(here::here("data/standard-drink-measure.csv"))
+standard_drinks_filtered <- standard_alcohol %>% 
+  filter(!is.na(`Indicator:Standard drink measures, in grams per unit`)) %>%
+  as_tibble() %>%
+  rename(standard_drinks_measure = `Indicator:Standard drink measures, in grams per unit`)
+ggplot(standard_drinks_filtered, aes(x = Entity, y = `standard_drinks_measure`, fill = Entity)) + 
+  geom_bar(stat = "identity") +
+  labs(title ="Standard drinking measure by country in grams per unit") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+- To gain further understanding, table \ref{tab:table1} presents information on the standard drinking measure for each country by calculating the mean. The mean provides a measure of the variability in the standard drink measure. It is then distributed as low, medium, high and very high based on the amount of alcohol in grams per unit.
+- The below table \ref{tab:table1} suggests that some countries have a higher content per serving than others, as it's evident that the Standard Drink Category column is high or very high. This information can be helpful for understanding alcohol consumption trends in order to identify different risks such as road accident deaths associated with alcohol consumption.
+\pagebreak
+```{r table1,out.width = "60%"}
+standard_alcohol <- read_csv(here::here("data/standard-drink-measure.csv"))
+standard_drinks_filtered <- standard_alcohol %>% 
+  filter(!is.na(`Indicator:Standard drink measures, in grams per unit`)) %>%
+  rename(drink_category = `Indicator:Standard drink measures, in grams per unit`) %>% 
+  mutate(standard_drink_category = cut(drink_category,
+                                       breaks = c(0, 5, 10, 15, 20),
+                                       labels = c("Low", "Medium", "High", "Very High"))) %>% 
+  group_by(Entity, standard_drink_category) %>% 
+  summarise()
+standard_drinks <- standard_alcohol %>% 
+  filter(!is.na(`Indicator:Standard drink measures, in grams per unit`)) %>%
+  group_by(Entity) %>%
+  summarise(mean_standard_drink = mean(`Indicator:Standard drink measures, in grams per unit`))
+standard_drinks_filtered <- left_join(standard_drinks_filtered, standard_drinks , by = "Entity")
+kable(standard_drinks_filtered, format = "markdown", booktabs = TRUE, 
+      col.names = c("Country", "Standard Drink Category", "Mean Standard Drink"), 
+      caption = "Mean Standard Drink Categories by Country") %>%
+  kable_styling(bootstrap_options = c("bordered", "hover")) 
+```
+
+# Results
+
+## Global Patterns of Alcohol Consumption
+
+Regardless of the beverage's types, they are all growing in popularity over time, which shows a significant shift in peoples' drinking habits. 
+For instance, it is observable that in figure \ref{fig:graph} , spirits are highly consumed by Japanese despite being the least popular in other nations. 
+Additionally, Japan has low consumption in wine and beer, which are the most common in other countries.
+
+```{r graph, out.width = "400px", out.height= "250px", fig.align='center', fig.cap="Preference of Beverage by Country"}
+
+# plotting a histogram
+
+ggplot(new_data, aes(x = Country, y = Max_alcohol, fill = Alcohol_Type)) +
+  geom_col(stat = "identity") +
+  ggtitle("Preference of Beverage by Country") +
+  scale_fill_manual(values = c("#007ea7", "#eef7fa", "black")) +
+  xlab("Country") +
+  ylab("Beverages Consumption") +
+  theme_minimal() +
+  coord_flip() +
+     theme(plot.title = element_text(hjust = 0.5, size = 18))
+```
+Overall, these results emphasize the significance of tracking alcohol consumption patterns 
+and encouraging responsible drinking behaviors to avoid the unfavorable health and social effects of binge drinking.
+
+## Global Expenditure on Alcohol
+
+Figure \ref{fig:GDP-vs-Consumption} shows that countries with higher GDP per capita drink more alcohol than those with lower income despite some outliers, indicating a possible linear relationship between the total alcohol consumption per capita and the GDP per capita. Noticeably, European countries' alcohol consumption outweighs that of other continents. However, figure \ref{fig:Population-vs-Consumption} shows random observations not following straight-line patterns, implying that linear relationships might not exist between these variables.
+Besides, the Pearson correlation coefficient from the linear regression consumption versus GDP is `r cons_vs_gdp_cor`, indicating a weak positive linear relationship between the total alcohol consumption per capita and the GDP per capita in 2018. Meanwhile, that of consumption versus population model is `r cons_vs_pop_cor`, implying no linear relationship exists. Moreover, the reported $R^2$ is `r summary(fit_model_gdp)$r.squared`, showing that `r round(summary(fit_model_gdp)$r.squared*100,2)` % of the variation in the total alcohol consumption per capita can be explained by the variation in the GDP per capita in 2018. 
+Besides, there are some interesting facts related to the USA - a leading country in GDP, alcohol consumption, and expenditure. By observing its spending on alcohol measured in 2021 inflation-adjusted dollar in figure \ref{fig:US-alcohol-exp}, this amount has increased massively over time, which is mostly spent on alcohol from liquor stores to consume at home.
+```{r US-alcohol-exp, fig.cap = "Alcohol Expenditure in USA (2000 - 2022)",include=TRUE}
+alcohol_exp %>%
+  ggplot(aes(x = Year,
+             y = `Alcohol Expenditure in 2021 $USD`,
+             color = Places)) +
+  geom_line() +
+  labs(title = bquote(
+    bold("Total alcohol expenditure by places (1997 - 2021)")))
+```
+\pagebreak
+## Current Sitatuation of Alcohol Use Disorder 
+
+The scatter plot (figure \ref{fig:top10} ) compares the prevalence of alcohol use disorders (AUD) in males versus females in 2019 for the top 10 countries with high rates of mental disorders related to alcohol abuse. 
+After investigating the data for the top 10 countries in terms of total population, it is evident that the percentage of individuals with AUD is significantly higher in males across all leading countries, with Russia, the United States, and Brazil exhibiting particularly higher ratios than the other countries. 
+Additionally, it is noteworthy that among the top 10 countries, those in Asia, despite having the largest population, have relatively much lower percentage of individuals suffering from the mental health impacts of alcoholism compared to other continents.
+
+```{r alcohol_prevalance_country, message = FALSE}
+alcohol_prevalance_country <- alcohol_prevalance %>% 
+  select(-Continent) %>% 
+  group_by(Entity) %>% 
+  filter(!(is.na(prevalance_aud_in_male)) ,!(is.na(prevalance_aud_in_female)), Entity != "World", Year == 2019) %>% arrange(desc(total_population_estimate))
+top10 <- head(alcohol_prevalance_country, 10)
+```
+
+```{r top10,fig.cap="Percentage of prevalence of AUD in males vs females in 2019",fig.height=5,fig.width=10}
+ggplot(top10, aes(y=prevalance_aud_in_male, x=prevalance_aud_in_female, label = Entity, color=Entity))+ geom_point(size = 5) +
+  
+  labs(x = "alcohol disorder in female", y = "alcohol disorder in male", title = "Percentage of AUD in males vs females in 2019") + theme(legend.position = 'none') + geom_label_repel(hjust=0.3,nudge_y = -0.2)
+```
+
+## Road-traffic accident deaths due to Alcohol
+Based on the results obtained from table \ref{tab:table1},it is understandable that alcohol consumption is a significant problem worldwide which should demand special attention.The below figure \ref{fig:figure2} provides information regarding the top 10 countries with the highest road-traffic deaths associated with alcohol consumption.
+It shows that although drivers comply with the standard alcohol drinking measures, an enormous number of road accident deaths still occur.The majority of the countries' figures exceed 50%, which is an alarming rate.
+```{r figure2,fig.cap="Top 10 countries with highest Alcohol-related road traffic deaths"}
+alcohol_consumption_road_traffic_deaths <- read_csv(here::here("data/road-traffic-deaths-to-alcohol.csv")) 
+road_traffic_death_max <- alcohol_consumption_road_traffic_deaths  %>% 
+  select("Entity", "Year", "Indicator:Attribution of road traffic deaths to alcohol (%)") %>%
+  rename("Alcohol-related road traffic deaths" = "Indicator:Attribution of road traffic deaths to alcohol (%)")
+top_10 <- road_traffic_death_max %>%
+  distinct(Entity, .keep_all = TRUE) %>%
+  arrange(desc(`Alcohol-related road traffic deaths`)) %>%
+  top_n(10, `Alcohol-related road traffic deaths`) %>%
+  select(Entity, Year,`Alcohol-related road traffic deaths`)
+ggplot(top_10, aes(x = Entity, y = `Alcohol-related road traffic deaths`, fill = Entity)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Top 10 countries with highest Alcohol-related road traffic deaths",
+       x = "Country", y = "Percentage of deaths attributed to alcohol")
+```
+
+# Discussion,Conclusion and Recommendations:
+
+Based on the analysis of the data sets, multiple inferences regarding the effects of alcohol consumption can be drawn based on four influencing factors, namely, consumption preferences, expenditure, alcohol use disorder, and consumption measures.
+
+Concerning consumer preferences, significant regional differences in the amount of alcohol consumed per person and how people consume beverages were found. From the table \ref{tab:table} it can be concluded that Beer is the most popular beverage, followed by wine and spirits. Secondly, the Middle East and North Africa have very little to no consumption, while Europe has the highest rates.
+
+With respect to alcohol expenditure, there seems to be insufficient evidence to conclude that people from high-income or highly populated countries drink more than others, as both linear models' reported $R^2$ values are low. However, according to @owidalcoholconsumption, many affluent countries consume more copious amounts of alcohol than others, including the USA, as shown in figure \ref{fig:US-alcohol-exp}.
+
+The pattern of the alcohol use disorder is presented in figure \ref{fig:top10}, demonstrating a more significant percentage of males being affected by the prevalence of alcohol use disorders due to alcoholism than that of females across the top 10 most populous countries worldwide. Moreover, despite having the largest population, Asian countries have fewer people suffering from AUD and its related mental health impacts of alcoholism than other continents.
+
+In the case of alcohol consumption measures and road-traffic deaths, it can be concluded from figure \ref{fig:std-alc} and figure \ref{fig:figure2} that, even after having standard alcohol drinking measures, alcohol consumption is still a concern as due to an inordinate number of deaths in road traffic accidents.
+
+Based on our conclusion, it is recommended that countries should prioritize running interventions and aid groups as a method to alleviate the situation of alcohol-related disorders and provide help for the victims of alcohol abuse. Campaigns on alcohol consumption should be launched to raise awareness about the delimits of alcohol consumption. Policymakers can introduce policies like increasing taxes on alcohol and enforcing strict drunk driving laws. Governments, health organizations, and educational institutions work together to resolve the problem of excessive alcohol consumption and promote responsible drinking habits.
